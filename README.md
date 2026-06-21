@@ -50,6 +50,8 @@ All tools work **fully offline** — no API key required for core features.
 ## Installation
 
 ```bash
+git clone https://github.com/pozii/tokensaver.git
+cd tokensaver
 pip install -e .
 ```
 
@@ -57,11 +59,25 @@ pip install -e .
 
 ---
 
+## How it connects to your AI client
+
+TokenSaver has no URL and runs no background server by default. It uses **stdio transport**: the AI client reads your config, spawns `python -m tokensaver` as a child process, and talks to it through stdin/stdout. You never open a port or start anything manually — the client does it for you when it launches.
+
+```
+Your AI client  ──spawn──▶  python -m tokensaver  ──stdio──▶  tools available
+```
+
+The alternative is **SSE transport**, where you start the server yourself on a local port and the client connects over HTTP. This is useful for multi-agent setups or when multiple clients share the same server instance.
+
+---
+
 ## Setup
 
 ### Claude Desktop
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+Config file location:
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -73,10 +89,16 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   }
 }
 ```
+
+Save the file and restart Claude Desktop. The tokensaver tools will appear in the tool list.
 
 ### Claude Code
 
-Add to `~/.claude/settings.json`:
+```bash
+claude mcp add tokensaver -- python -m tokensaver
+```
+
+Or add manually to `~/.claude/settings.json`:
 
 ```json
 {
@@ -89,14 +111,66 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-### HTTP/SSE (multi-agent or remote)
+### OpenCode
+
+Config file: `~/.config/opencode/config.json`
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "tokensaver": {
+        "type": "local",
+        "command": ["python", "-m", "tokensaver"]
+      }
+    }
+  }
+}
+```
+
+### Any MCP-compatible client (SSE mode)
+
+Start the server once:
+
+```bash
+python -m tokensaver --transport sse --port 8765
+```
+
+Then point your client at:
+
+```
+http://localhost:8765/sse
+```
+
+### Fixing Python path issues
+
+If your system has multiple Python versions and `python` resolves to the wrong one, use the full path:
+
+```bash
+# Find the right Python
+which python3        # macOS / Linux
+where python         # Windows
+```
+
+Then use the full path in your config:
 
 ```json
 {
   "mcpServers": {
     "tokensaver": {
-      "command": "python",
-      "args": ["-m", "tokensaver", "--transport", "sse", "--port", "8765"]
+      "command": "/usr/local/bin/python3",
+      "args": ["-m", "tokensaver"]
+    }
+  }
+}
+```
+
+```json
+{
+  "mcpServers": {
+    "tokensaver": {
+      "command": "C:\\Python314\\python.exe",
+      "args": ["-m", "tokensaver"]
     }
   }
 }
