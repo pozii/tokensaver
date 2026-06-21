@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tokensaver-mcp"
+version = "0.1.0"
+description = "MCP server that minimizes AI agent token usage — context compression, caching, web extraction, conversation pruning"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=2.0",
+    "tiktoken>=0.7",
+    "httpx>=0.27",
+    "trafilatura>=1.12",
+    "beautifulsoup4>=4.12",
+    "sumy>=0.11",
+    "diskcache>=5.6",
+    "pydantic>=2.7",
+    "python-dotenv>=1.0",
+    "anyio>=4.4",
+    "nltk>=3.8",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.34"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "httpx>=0.27"]
+
+[project.scripts]
+tokensaver-mcp = "tokensaver.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tokensaver"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
